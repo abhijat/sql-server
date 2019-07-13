@@ -77,6 +77,11 @@ class Extractor(object):
         return [obj[self.column] for obj in dataset]
 
 
+class MultiExtractor(object):
+    def apply(self, dataset):
+        return [', '.join(obj.values()) for obj in dataset]
+
+
 def is_aggregate(entity: str):
     return any(entity.startswith(f'{k}(') for k in ('AVG', 'MIN', 'MAX', 'SUM', 'COUNT')) and entity.endswith(')')
 
@@ -91,7 +96,9 @@ def parse_select_statement(tokens):
 
     for entity in entities_iter:
         if entity:
-            if is_aggregate(entity):
+            if entity == '*':
+                output_fields.append(MultiExtractor())
+            elif is_aggregate(entity):
                 output_fields.append(Aggregator.from_string(entity))
             elif entity == 'DISTINCT':
                 output_fields.append(Distinct(next(entities_iter)))

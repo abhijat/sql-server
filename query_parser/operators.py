@@ -1,5 +1,7 @@
+import csv
 from enum import Enum
 
+from query_parser.aggregators import parse_select_statement
 from query_parser.expression_parser import build_expression_from_tokens
 
 OPERATOR_KEYWORDS = (
@@ -32,6 +34,9 @@ class Operator(object):
     def validate(self):
         raise NotImplementedError
 
+    def apply(self, data=None):
+        raise NotImplementedError
+
     @staticmethod
     def from_keyword(keyword: str):
         if keyword == 'SELECT':
@@ -47,6 +52,10 @@ class Operator(object):
 
 
 class SelectOperator(Operator):
+    def __init__(self):
+        super().__init__()
+        self.output_fields = None
+
     def state(self):
         return ParserState.POST_SELECT
 
@@ -56,6 +65,13 @@ class SelectOperator(Operator):
         # Empty select implies select *
         if not self.expression_buffer:
             raise ValueError('At least one column name or "*" is required')
+        self.output_fields = parse_select_statement(self.expression_buffer)
+
+    def apply(self, data=None):
+        output_list = []
+        for field in self.output_fields:
+            output_list.append(field.apply(data))
+        return zip(*output_list)
 
     def __repr__(self) -> str:
         return f'<SELECT {" ".join(self.expression_buffer)}>'
@@ -69,11 +85,19 @@ class FromOperator(Operator):
     def state(self):
         return ParserState.POST_FROM
 
+    def apply(self, data=None):
+        with open(f'../{self.expression_buffer[0]}.csv', 'r') as csvfile:
+            reader = csv.DictReader(csvfile)
+            return list(reader)
+
     def __repr__(self) -> str:
         return f'<FROM {" ".join(self.expression_buffer)}>'
 
 
 class WhereOperator(Operator):
+
+    def apply(self, data=None):
+        return [item for item in data if self.filter_criteria.apply(item)]
 
     def __init__(self) -> None:
         super().__init__()
@@ -97,6 +121,9 @@ class LimitOperator(Operator):
         super().__init__()
         self.limit = None
 
+    def apply(self, data=None):
+        return data[:self.limit]
+
     def validate(self):
         if len(self.expression_buffer) != 1:
             raise ValueError(f'invalid limit {self.expression_buffer}')
@@ -115,6 +142,9 @@ class LimitOperator(Operator):
 
 
 class EndOperator(Operator):
+    def apply(self, data=None):
+        pass
+
     def validate(self):
         if self.expression_buffer:
             raise ValueError(f'End of statement should have no expressions {self.expression_buffer}')

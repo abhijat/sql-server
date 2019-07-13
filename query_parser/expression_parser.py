@@ -103,7 +103,7 @@ class NotExpression(Expression):
         return not self.expression.apply(obj)
 
 
-def build_expression_from_tokens(tokens):
+def build_expression_from_tokens(tokens) -> Expression:
     # For the lack of time we will use a multi-pass strategy here
     initial_pass = []
 

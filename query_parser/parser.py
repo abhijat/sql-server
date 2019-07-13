@@ -78,8 +78,3 @@ class QueryParser(object):
 
         return queries
 
-
-if __name__ == '__main__':
-    s = 'SELECT * FROM foo WHERE bar = 1 AND X = 7 LIMIT 10; SELECT * FROM foo;'
-    q = QueryParser().parse(s)
-    print(q)
