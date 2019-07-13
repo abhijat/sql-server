@@ -31,9 +31,16 @@ class BinaryExpression(Expression):
         elif key == '<':
             return LessThanExpression(fieldname, value)
 
-    def __init__(self, fieldname: str, value) -> None:
+    def __init__(self, fieldname: str, value: str) -> None:
         super().__init__()
         self.fieldname = fieldname
+
+        if value.isnumeric():
+            value = float(value)
+        if value in ('True', 'true'):
+            value = True
+        if value in ('False', 'false'):
+            value = False
         self.value = value
 
 
