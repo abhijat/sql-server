@@ -2,6 +2,7 @@ import logging
 import socketserver
 import sys
 
+from query_parser.operators import configuration, InvalidStateException
 from query_parser.parser import QueryParser
 
 
@@ -24,7 +25,7 @@ class RequestHandler(socketserver.BaseRequestHandler):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         print(f'Usage: {sys.argv[0]} <PORT>')
         sys.exit(1)
 
@@ -33,6 +34,11 @@ if __name__ == '__main__':
     except ValueError:
         print(f'invalid port {sys.argv[1]}')
         sys.exit(1)
+
+    if len(sys.argv) == 3:
+        configuration['data_path'] = sys.argv[2]
+    else:
+        configuration['data_path'] = '..'
 
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)-15s %(name)s %(message)s')
 

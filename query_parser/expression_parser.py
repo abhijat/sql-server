@@ -49,26 +49,23 @@ class BinaryExpression(Expression):
 
 class EqualsExpression(BinaryExpression):
     def apply(self, obj: dict) -> bool:
-        x: str = obj[self.fieldname]
-        if x.isnumeric():
-            x = float(x)
-        return x == self.value
+        if isinstance(self.value, float):
+            return float(obj[self.fieldname]) == self.value
+        return obj[self.fieldname] == self.value
 
 
 class LessThanExpression(BinaryExpression):
     def apply(self, obj: dict) -> bool:
-        x: str = obj[self.fieldname]
-        if x.isnumeric():
-            x = float(x)
-        return x < self.value
+        if isinstance(self.value, float):
+            return float(obj[self.fieldname]) > self.value
+        return obj[self.fieldname] < self.value
 
 
 class GreaterThanExpression(BinaryExpression):
     def apply(self, obj: dict) -> bool:
-        x: str = obj[self.fieldname]
-        if x.isnumeric():
-            x = float(x)
-        return x > self.value
+        if isinstance(self.value, float):
+            return float(obj[self.fieldname]) > self.value
+        return obj[self.fieldname] > self.value
 
 
 class AndExpression(Expression):
@@ -122,9 +119,12 @@ def build_expression_from_tokens(tokens) -> Expression:
         if token in EXPRESSION_KEYWORDS:
             initial_pass.append(token)
         else:
-            lhs, op, rhs = token, next(token_iter), next(token_iter)
-            expression = BinaryExpression.from_buffer(lhs, op, rhs)
-            initial_pass.append(expression)
+            try:
+                lhs, op, rhs = token, next(token_iter), next(token_iter)
+                expression = BinaryExpression.from_buffer(lhs, op, rhs)
+                initial_pass.append(expression)
+            except StopIteration:
+                raise ValueError('Invalid filter expression: {}'.format(' '.join(tokens)))
 
     joint_clause = None
 

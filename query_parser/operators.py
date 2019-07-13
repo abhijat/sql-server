@@ -1,4 +1,6 @@
 import csv
+import logging
+import os
 from enum import Enum
 
 from query_parser.aggregators import parse_select_statement
@@ -11,6 +13,9 @@ OPERATOR_KEYWORDS = (
     'LIMIT',
     ';'
 )
+
+
+configuration = {}
 
 
 class ParserState(Enum):
@@ -86,7 +91,12 @@ class FromOperator(Operator):
         return ParserState.POST_FROM
 
     def apply(self, data=None):
-        with open(f'../{self.expression_buffer[0]}.csv', 'r') as csvfile:
+        # TODO this should really come from command line args and not hardcoded like this!
+        filename = f'{configuration["data_path"]}/{self.expression_buffer[0]}.csv'
+        if not os.path.exists(filename):
+            raise ValueError(f'Data source {self.expression_buffer[0]} is invalid')
+
+        with open(filename, 'r') as csvfile:
             reader = csv.DictReader(csvfile)
             return list(reader)
 
@@ -97,7 +107,12 @@ class FromOperator(Operator):
 class WhereOperator(Operator):
 
     def apply(self, data=None):
-        return [item for item in data if self.filter_criteria.apply(item)]
+        rows = []
+        for row in data:
+            logging.debug(row)
+            if self.filter_criteria.apply(row):
+                rows.append(row)
+        return rows
 
     def __init__(self) -> None:
         super().__init__()
@@ -106,7 +121,7 @@ class WhereOperator(Operator):
     def validate(self):
         self.filter_criteria = build_expression_from_tokens(self.expression_buffer)
         if not self.filter_criteria:
-            raise ValueError('could not build filter criteria from expression {}'.format(self.expression_buffer))
+            raise ValueError('No filter criteria given for where clause')
 
     def state(self):
         return ParserState.POST_WHERE
@@ -175,7 +190,7 @@ class InvalidStateException(ValueError):
         self.operator = operator
 
     def __str__(self) -> str:
-        return f'{self.message} {self.current_state} {self.operator}'
+        return f'Invalid syntax: {self.message} in state, {self.current_state} attempted to add {self.operator}'
 
 
 def is_operator_state_valid(current_state: ParserState, operator: Operator):
