@@ -1,65 +1,77 @@
 from typing import List
 
-from query_parser.operators import OPERATOR_KEYWORDS, ParserState, is_operator_valid, \
+from query_parser.operators import OPERATOR_KEYWORDS, ParserState, is_operator_state_valid, \
     InvalidStateException, Operator
 from query_parser.query import Query
 
 
-def cleanup_final_token(token, tokens):
-    if token != ';' and token.endswith(';'):
-        token = token[:-1]
-        tokens.append(';')
-    return token
+class QueryParser(object):
 
+    def __init__(self) -> None:
+        super().__init__()
+        self.tokens = []
+        self._initialize_state()
 
-def parse_query(query: str) -> List[Query]:
-    queries = []
-    tokens = query.split()
+    def _initialize_state(self):
+        self.state = ParserState.INIT
+        self.operators = []
+        self.operator = None
+        self.expression_buffer = []
 
-    state = ParserState.INIT
-    operator = None
+    def _cleanup_final_token(self, token, index):
+        if token != ';' and token.endswith(';'):
+            token = token[:-1]
 
-    operators = []
-    expression_buffer = []
+            self.tokens.insert(index + 1, ';')
+        return token
 
-    for token in tokens:
-        # Dirty hack to make sure the semicolon is treated as a distinct token!
-        token = cleanup_final_token(token, tokens)
+    def _finalize_operator(self):
+        # Push the collected expression buffer to operator
+        self.operator.expression_buffer = self.expression_buffer
+        self.expression_buffer = []
 
-        if token in OPERATOR_KEYWORDS:
-            # Push the existing operator to stack, if any
-            if operator:
-                # Push the collected expression buffer to operator
-                operator.expression_buffer = expression_buffer
-                expression_buffer = []
+        # Make sure the expression is valid
+        self.operator.validate()
+        self.operators.append(self.operator)
 
-                # Make sure the expression is valid
-                operator.validate()
-                operators.append(operator)
+    def parse(self, query_string: str) -> List[Query]:
+        queries = []
 
-            # Initialize the new operator
-            operator = Operator.from_keyword(token)
-            if not is_operator_valid(state, operator):
-                raise InvalidStateException('Invalid operator for state', state, operator)
-            state = operator.state()
+        self.tokens = query_string.split()
 
-            if state == ParserState.END:
-                queries.append(Query(operators))
+        for index, token in enumerate(self.tokens):
+            token = self._cleanup_final_token(token, index)
 
-        # A non-operator token! Add it to the expression buffer
-        else:
-            if not operator:
-                raise InvalidStateException('Invalid start of query', state, None)
-            expression_buffer.append(token)
+            if token in OPERATOR_KEYWORDS:
+                # Push the existing operator to stack, if any
+                if self.operator:
+                    self._finalize_operator()
 
-    # All tokens have ended. The state must be correct
-    if state != ParserState.END:
-        raise InvalidStateException('Malformed end of query', state, None)
+                # Initialize the new operator
+                self.operator = Operator.from_keyword(token)
+                if not is_operator_state_valid(self.state, self.operator):
+                    raise InvalidStateException('Invalid operator for state', self.state, self.operator)
+                self.state = self.operator.state()
 
-    return queries
+                if self.state == ParserState.END:
+                    queries.append(Query(self.operators))
+                    if index < len(self.tokens) - 1:
+                        self._initialize_state()
+
+            # A non-operator token! Add it to the expression buffer
+            else:
+                if not self.operator:
+                    raise InvalidStateException('Invalid start of query', self.state, None)
+                self.expression_buffer.append(token)
+
+        # All tokens have ended. The state must be correct
+        if self.state != ParserState.END:
+            raise InvalidStateException('Malformed end of query', self.state, None)
+
+        return queries
 
 
 if __name__ == '__main__':
-    s = 'SELECT * FROM foo WHERE bar = 1 AND X = 7 LIMIT 10;'
-    q = parse_query(s)
+    s = 'SELECT * FROM foo WHERE bar = 1 AND X = 7 LIMIT 10; SELECT * FROM foo;'
+    q = QueryParser().parse(s)
     print(q)
