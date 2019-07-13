@@ -9,3 +9,7 @@ class Query(object):
         super().__init__()
         self.operators = operators
 
+    def __repr__(self) -> str:
+        return f'operators: {" | ".join(repr(op) for op in self.operators)}'
+
+
