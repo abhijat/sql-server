@@ -1,7 +1,6 @@
 from enum import Enum
-from typing import Union
 
-from query_parser.operators import SelectOperator, FromOperator, WhereOperator, LimitOperator, EndOperator
+from query_parser.operators import SelectOperator, FromOperator, WhereOperator, LimitOperator, EndOperator, Operator
 
 
 class ParserState(Enum):
@@ -31,10 +30,5 @@ class InvalidStateException(ValueError):
         self.operator = operator
 
 
-def is_operator_valid(
-        current_state: ParserState,
-        operator: Union[SelectOperator, FromOperator, WhereOperator, LimitOperator, EndOperator]
-):
-    valid_operators = VALID_NEXT_OPERATOR_STATES[current_state]
-    if operator not in valid_operators:
-        raise InvalidStateException('Invalid operator for state', current_state, operator)
+def is_operator_valid(current_state: ParserState, operator: Operator):
+    return operator in VALID_NEXT_OPERATOR_STATES[current_state]
