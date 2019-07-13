@@ -20,5 +20,5 @@ Note: The way this project is set up, the datapath should be ./data if running t
 ##### Running tests
 
 Having activated the venv: 
-`python -m unittest -b`
+`python -m unittest -v`
 
