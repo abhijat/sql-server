@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 from query_parser.operators import OPERATOR_KEYWORDS, ParserState, is_operator_state_valid, \
@@ -58,6 +59,7 @@ class QueryParser(object):
 
         self.tokens = query_string.split()
         for index, token in enumerate(self.tokens):
+            logging.debug(f'token: {token}')
             token = self._cleanup_final_token(token, index)
 
             if token in OPERATOR_KEYWORDS:

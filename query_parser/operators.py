@@ -170,8 +170,12 @@ class InvalidStateException(ValueError):
 
     def __init__(self, message, current_state, operator) -> None:
         super().__init__(message)
+        self.message = message
         self.current_state = current_state
         self.operator = operator
+
+    def __str__(self) -> str:
+        return f'{self.message} {self.current_state} {self.operator}'
 
 
 def is_operator_state_valid(current_state: ParserState, operator: Operator):
