@@ -84,6 +84,9 @@ class SelectOperator(Operator):
 
 class FromOperator(Operator):
     def validate(self):
+        if not self.expression_buffer:
+            raise ValueError('Data source missing')
+
         if len(self.expression_buffer) != 1:
             raise ValueError(f'We do not support multiple data sources right now {self.expression_buffer}')
 
