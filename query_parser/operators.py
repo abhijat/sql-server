@@ -119,3 +119,5 @@ class InvalidStateException(ValueError):
 
 def is_operator_state_valid(current_state: ParserState, operator: Operator):
     return any(isinstance(operator, operator_type) for operator_type in VALID_NEXT_OPERATOR_STATES[current_state])
+
+
