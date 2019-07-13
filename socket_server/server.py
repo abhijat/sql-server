@@ -11,10 +11,16 @@ class RequestHandler(socketserver.BaseRequestHandler):
         self.data = self.request.recv(4096).strip()
         logging.info(f'serving query {self.data}')
 
-        queries = QueryParser().parse(self.data.decode('ascii'))
-        for query in queries:
-            response = '\n'.join(query.execute())
-            self.request.sendall(response.encode('ascii'))
+        try:
+            queries = QueryParser().parse(self.data.decode('ascii'))
+            for query in queries:
+                for row in query.execute():
+                    self.request.sendall(row.encode('ascii'))
+                    self.request.sendall(b'\r\n')
+        except Exception as e:
+            self.request.sendall(str(e).encode('ascii'))
+
+        self.request.sendall(b'\r\n')
 
 
 if __name__ == '__main__':

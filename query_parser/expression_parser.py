@@ -49,17 +49,26 @@ class BinaryExpression(Expression):
 
 class EqualsExpression(BinaryExpression):
     def apply(self, obj: dict) -> bool:
-        return obj[self.fieldname] == self.value
+        x: str = obj[self.fieldname]
+        if x.isnumeric():
+            x = float(x)
+        return x == self.value
 
 
 class LessThanExpression(BinaryExpression):
     def apply(self, obj: dict) -> bool:
-        return obj[self.fieldname] < self.value
+        x: str = obj[self.fieldname]
+        if x.isnumeric():
+            x = float(x)
+        return x < self.value
 
 
 class GreaterThanExpression(BinaryExpression):
     def apply(self, obj: dict) -> bool:
-        return obj[self.fieldname] > self.value
+        x: str = obj[self.fieldname]
+        if x.isnumeric():
+            x = float(x)
+        return x > self.value
 
 
 class AndExpression(Expression):
