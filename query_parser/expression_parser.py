@@ -110,7 +110,7 @@ def build_expression_from_tokens(tokens):
     token_iter = iter(tokens)
     # First build all simple binary expressions
     for token in token_iter:
-        if token in ('AND', 'OR', 'NOT'):
+        if token in EXPRESSION_KEYWORDS:
             initial_pass.append(token)
         else:
             lhs, op, rhs = token, next(token_iter), next(token_iter)
