@@ -24,6 +24,7 @@ class BinaryExpression(Expression):
 
     @staticmethod
     def from_buffer(fieldname, key, value) -> 'BinaryExpression':
+        # TODO we should probably check here if the value supports > or <
         if key == '=':
             return EqualsExpression(fieldname, value)
         elif key == '>':
@@ -37,10 +38,12 @@ class BinaryExpression(Expression):
 
         if value.isnumeric():
             value = float(value)
-        if value in ('True', 'true'):
+        elif value in ('True', 'true'):
             value = True
-        if value in ('False', 'false'):
+        elif value in ('False', 'false'):
             value = False
+        elif (value.startswith('"') and value.endswith('"')) or (value.startswith('\'') and value.endswith('\'')):
+            value = value[1:-1]
         self.value = value
 
 

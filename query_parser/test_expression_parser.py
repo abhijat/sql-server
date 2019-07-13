@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from query_parser.expression_parser import build_expression_from_tokens, EqualsExpression, LessThanExpression, \
-    GreaterThanExpression, AndExpression
+    GreaterThanExpression, AndExpression, NotExpression
 
 
 class TestExpressionParser(TestCase):
@@ -45,3 +45,13 @@ class TestExpressionParser(TestCase):
 
         self.assertEqual(lhs.fieldname, 'a')
         self.assertEqual(rhs.value, 0)
+
+    def test_not_expression(self):
+        s = 'NOT foo = "bar"'
+        clause = build_expression_from_tokens(s.split())
+        self.assertIsInstance(clause, NotExpression)
+
+        expr = clause.expression
+        self.assertIsInstance(expr, EqualsExpression)
+        self.assertEqual(expr.fieldname, 'foo')
+        self.assertEqual('bar', expr.value)
