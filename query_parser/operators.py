@@ -1,7 +1,8 @@
 import csv
-import logging
 import os
+from collections import Iterable
 from enum import Enum
+from itertools import repeat
 
 from query_parser.aggregators import parse_select_statement
 from query_parser.expression_parser import build_expression_from_tokens
@@ -13,7 +14,6 @@ OPERATOR_KEYWORDS = (
     'LIMIT',
     ';'
 )
-
 
 configuration = {}
 
@@ -76,7 +76,21 @@ class SelectOperator(Operator):
         output_list = []
         for field in self.output_fields:
             output_list.append(field.apply(data))
-        return zip(*output_list)
+
+        iterators = []
+        has_list = False
+        for output in output_list:
+            if isinstance(output, Iterable):
+                iterators.append(iter(output))
+                has_list = True
+            else:
+                iterators.append(repeat(output))
+
+        # There are only scalar values. So just return the initial values of gathered iterators
+        if not has_list:
+            return [(next(i) for i in iterators)]
+        else:
+            return zip(*iterators)
 
     def __repr__(self) -> str:
         return f'<SELECT {" ".join(self.expression_buffer)}>'
@@ -112,7 +126,6 @@ class WhereOperator(Operator):
     def apply(self, data=None):
         rows = []
         for row in data:
-            logging.debug(row)
             if self.filter_criteria.apply(row):
                 rows.append(row)
         return rows

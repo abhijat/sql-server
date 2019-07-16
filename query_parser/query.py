@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 from query_parser.operators import Operator, FromOperator, SelectOperator, LimitOperator, WhereOperator
@@ -40,4 +41,4 @@ class Query(object):
         data = self._select.apply(data)
 
         for row in data:
-            yield ', '.join(row)
+            yield ', '.join([str(item) for item in row])

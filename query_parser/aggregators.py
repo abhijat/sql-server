@@ -10,6 +10,18 @@ class Aggregator(object):
     def apply(self, dataset):
         raise NotImplementedError
 
+    def _apply_function_on_data(self, dataset, func):
+        if not dataset:
+            return None
+
+        value = float(dataset[0][self.column])
+        for obj in dataset[1:]:
+            try:
+                value = func(value, float(obj[self.column]))
+            except ValueError:
+                continue
+        return value
+
     @staticmethod
     def from_string(entity: str) -> 'Aggregator':
         match = re.match('AVG\((?P<x>.*)\)', entity)
@@ -35,8 +47,9 @@ class Aggregator(object):
 
 class Average(Aggregator):
     def apply(self, dataset: List[dict]):
-        values = [obj[self.column] for obj in dataset]
-        return sum(values) // len(values)
+        summation = Sum(self.column)
+        _sum = summation.apply(dataset)
+        return _sum // len(dataset)
 
 
 class Count(Aggregator):
@@ -46,17 +59,17 @@ class Count(Aggregator):
 
 class Sum(Aggregator):
     def apply(self, dataset):
-        return sum([obj[self.column] for obj in dataset])
+        return self._apply_function_on_data(dataset, lambda x, y: x + y)
 
 
 class Min(Aggregator):
     def apply(self, dataset):
-        return min([obj[self.column] for obj in dataset])
+        return self._apply_function_on_data(dataset, min)
 
 
 class Max(Aggregator):
     def apply(self, dataset):
-        return max([obj[self.column] for obj in dataset])
+        return self._apply_function_on_data(dataset, max)
 
 
 class Distinct(object):

@@ -45,27 +45,31 @@ class BinaryExpression(Expression):
         elif (value.startswith('"') and value.endswith('"')) or (value.startswith('\'') and value.endswith('\'')):
             value = value[1:-1]
         self.value = value
+        self.value_type = type(value)
 
 
 class EqualsExpression(BinaryExpression):
     def apply(self, obj: dict) -> bool:
-        if isinstance(self.value, float):
-            return float(obj[self.fieldname]) == self.value
-        return obj[self.fieldname] == self.value
+        try:
+            return self.value_type(obj[self.fieldname]) == self.value
+        except ValueError:
+            return False
 
 
 class LessThanExpression(BinaryExpression):
     def apply(self, obj: dict) -> bool:
-        if isinstance(self.value, float):
-            return float(obj[self.fieldname]) > self.value
-        return obj[self.fieldname] < self.value
+        try:
+            return self.value_type(obj[self.fieldname]) < self.value
+        except ValueError:
+            return False
 
 
 class GreaterThanExpression(BinaryExpression):
     def apply(self, obj: dict) -> bool:
-        if isinstance(self.value, float):
-            return float(obj[self.fieldname]) > self.value
-        return obj[self.fieldname] > self.value
+        try:
+            return self.value_type(obj[self.fieldname]) > self.value
+        except ValueError:
+            return False
 
 
 class AndExpression(Expression):
